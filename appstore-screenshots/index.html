@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Readori — App Store Screenshots Generator</title>
+<style>
+  /* ======== RESET & BASE ======== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { background: #111; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+    padding: 40px 20px 80px;
+  }
+
+  /* ======== CONTROLS ======== */
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(17, 17, 17, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 16px 24px;
+    border-radius: 16px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 900px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all .2s;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .controls .info {
+    color: #888;
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  /* ======== SCREENSHOT FRAME ======== */
+  .frame {
+    width: 1284px;
+    height: 2778px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    border-radius: 8px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+  }
+
+  /* ======== FRAME LABEL ======== */
+  .frame-label {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.5);
+    color: #aaa;
+    font-size: 18px;
+    padding: 6px 14px;
+    border-radius: 8px;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* ======== BACKGROUNDS ======== */
+  .bg-1 { background: linear-gradient(165deg, #0B1929 0%, #0F2942 40%, #1B4965 100%); }
+  .bg-2 { background: linear-gradient(165deg, #0A1628 0%, #0E2740 40%, #163D50 100%); }
+  .bg-3 { background: linear-gradient(165deg, #0F1F3A 0%, #142E4F 40%, #1A4A5E 100%); }
+  .bg-4 { background: linear-gradient(165deg, #101729 0%, #162B45 40%, #1E3D59 100%); }
+  .bg-5 { background: linear-gradient(165deg, #150D28 0%, #1E1445 40%, #2D1B69 100%); }
+  .bg-6 { background: linear-gradient(165deg, #0C1F2E 0%, #112F42 40%, #1B4050 100%); }
+  .bg-7 { background: linear-gradient(165deg, #111D2E 0%, #152A40 40%, #1C3A4E 100%); }
+  .bg-8 { background: linear-gradient(165deg, #0E1A2D 0%, #132739 40%, #193545 100%); }
+
+  /* ======== DECORATIVE GLOW ======== */
+  .frame::before {
+    content: '';
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    filter: blur(200px);
+    opacity: 0.15;
+    top: -200px;
+    right: -200px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .bg-1::before { background: #4A90D9; }
+  .bg-2::before { background: #3D8B8B; }
+  .bg-3::before { background: #5A7FB5; }
+  .bg-4::before { background: #4A7DAA; }
+  .bg-5::before { background: #8B5CF6; }
+  .bg-6::before { background: #3D8B8B; }
+  .bg-7::before { background: #4A7C97; }
+  .bg-8::before { background: #4A90A4; }
+
+  /* ======== TEXT AREA ======== */
+  .text-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 620px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    padding: 0 80px;
+    text-align: center;
+  }
+  .text-area .headline {
+    font-size: 82px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    color: #FFFFFF;
+    text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+  }
+  .text-area .subtitle {
+    font-size: 38px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.3;
+    text-shadow: 0 2px 15px rgba(0,0,0,0.2);
+  }
+
+  /* ======== SCREENSHOT CONTAINER ======== */
+  .screenshot-container {
+    position: absolute;
+    top: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 960px;
+    height: 2080px;
+    z-index: 5;
+    border-radius: 48px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 3px rgba(255,255,255,0.08),
+      0 30px 80px rgba(0,0,0,0.5),
+      0 10px 30px rgba(0,0,0,0.3);
+  }
+  .screenshot-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+  }
+
+  /* ======== PLACEHOLDER (shown when no image) ======== */
+  .placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, #f5f5f7 0%, #e5e5ea 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    color: #86868b;
+    font-size: 28px;
+  }
+  .placeholder .icon { font-size: 60px; opacity: 0.5; }
+  .placeholder .filename {
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 22px;
+    background: rgba(0,0,0,0.05);
+    padding: 8px 18px;
+    border-radius: 8px;
+  }
+
+  /* ======== ZOOM CONTROLS ======== */
+  .zoom-label { color: #666; font-size: 12px; }
+
+  /* ======== PRINT / EXPORT ======== */
+  @media print {
+    body { background: none; padding: 0; gap: 0; }
+    .controls, .frame-label { display: none; }
+    .frame { box-shadow: none; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== NAVIGATION ==================== -->
+<!-- div class="controls">
+  <button onclick="scrollToFrame(0)">1 · Library</button>
+  <button onclick="scrollToFrame(1)">2 · Explore</button>
+  <button onclick="scrollToFrame(2)">3 · Reader</button>
+  <button onclick="scrollToFrame(3)">4 · Reading Exp</button>
+  <button onclick="scrollToFrame(4)">5 · Pro</button>
+  <button onclick="scrollToFrame(5)">6 · Import</button>
+  <button onclick="scrollToFrame(6)">7 · Settings</button>
+  <button onclick="scrollToFrame(7)">8 · Personal</button>
+  <div class="info">
+    1284 × 2778 px · Place your raw screenshots in <code>screenshots/</code> folder · Use <code>render.py</code> to export PNG
+  </div>
+</div-->
+
+<!-- ==================== 1. LIBRARY (Hero) ==================== -->
+<div class="frame bg-1" id="frame-0">
+  <div class="frame-label">#1 Library (Hero)</div>
+  <div class="text-area">
+    <div class="headline">Your Personal Library</div>
+    <div class="subtitle">Beautifully organized with cover art</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/01-library.png"
+         alt="Library"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">📚</div>
+      <div>Place your Library screenshot here</div>
+      <div class="filename">screenshots/01-library.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 2. EXPLORE ==================== -->
+<div class="frame bg-2" id="frame-1">
+  <div class="frame-label">#2 Explore</div>
+  <div class="text-area">
+    <div class="headline">Discover Classics Books</div>
+    <div class="subtitle">Gutenberg &amp; LibriVox built right in</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/02-explore.png"
+         alt="Explore"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">🔍</div>
+      <div>Place your Explore screenshot here</div>
+      <div class="filename">screenshots/02-explore.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 3. READING SETTINGS (In-Reader Panel) ==================== -->
+<div class="frame bg-3" id="frame-2">
+  <div class="frame-label">#3 Reading Settings</div>
+  <div class="text-area">
+    <div class="headline">Customize Everything</div>
+    <div class="subtitle">Fonts, spacing, margins &amp; themes</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/03-reading-settings.png"
+         alt="Reading Settings"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">🎨</div>
+      <div>Place your Reading Settings screenshot here</div>
+      <div class="filename">screenshots/03-reading-settings.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 4. READING EXPERIENCE ==================== -->
+<div class="frame bg-4" id="frame-3">
+  <div class="frame-label">#4 Reading Experience</div>
+  <div class="text-area">
+    <div class="headline">Read Your Way</div>
+    <div class="subtitle">TTS, themes &amp; typography controls</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/04-reading-experience.png"
+         alt="Reading Experience"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">📖</div>
+      <div>Place your Reading Experience screenshot here</div>
+      <div class="filename">screenshots/04-reading-experience.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 5. PRO FEATURES ==================== -->
+<div class="frame bg-5" id="frame-4">
+  <div class="frame-label">#5 Pro Features</div>
+  <div class="text-area">
+    <div class="headline">Unlock Pro</div>
+    <div class="subtitle">Custom themes, fonts, TTS &amp; more</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/05-pro.png"
+         alt="Pro Features"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">👑</div>
+      <div>Place your Pro Features screenshot here</div>
+      <div class="filename">screenshots/05-pro.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 6. IMPORT SOURCES ==================== -->
+<div class="frame bg-6" id="frame-5">
+  <div class="frame-label">#6 Import Sources</div>
+  <div class="text-area">
+    <div class="headline">Add Any Book Source</div>
+    <div class="subtitle">URL, JSON, QR Code or local file</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/06-import.png"
+         alt="Import Sources"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">🔗</div>
+      <div>Place your Import Sources screenshot here</div>
+      <div class="filename">screenshots/06-import.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 7. SETTINGS ==================== -->
+<div class="frame bg-7" id="frame-6">
+  <div class="frame-label">#7 Settings</div>
+  <div class="text-area">
+    <div class="headline">Powerful &amp; Personal</div>
+    <div class="subtitle">Fine-tune every aspect of your experience</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/07-settings.png"
+         alt="Settings"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">⚙️</div>
+      <div>Place your Settings screenshot here</div>
+      <div class="filename">screenshots/07-settings.png</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 8. PERSONALIZATION ==================== -->
+<div class="frame bg-8" id="frame-7">
+  <div class="frame-label">#8 Personalization</div>
+  <div class="text-area">
+    <div class="headline">Make It Yours</div>
+    <div class="subtitle">Language, appearance &amp; layout</div>
+  </div>
+  <div class="screenshot-container">
+    <img src="screenshots/08-personalization.png"
+         alt="Personalization"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="placeholder" style="display:none;">
+      <div class="icon">✨</div>
+      <div>Place your Personalization screenshot here</div>
+      <div class="filename">screenshots/08-personalization.png</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function scrollToFrame(idx) {
+  document.getElementById('frame-' + idx)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// Show all placeholders by default if images fail
+document.querySelectorAll('.screenshot-container img').forEach(img => {
+  if (!img.complete || img.naturalWidth === 0) {
+    img.style.display = 'none';
+    const ph = img.nextElementSibling;
+    if (ph) ph.style.display = 'flex';
+  }
+});
+</script>
+</body>
+</html>
